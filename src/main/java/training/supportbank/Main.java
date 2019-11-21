@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class Main {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
     public static void main(String[] args) {
         final Bank supportBank = new Bank("SupportBank");
@@ -31,6 +31,7 @@ public class Main {
     private static void readTransactions(Bank currentBank, String fileName) {
         final String COMMA_DELIMITER = ",";
         BufferedReader br = null;
+        int errorCount = 0;
 
         System.out.println("Attempting to read transactions from csv file...");
 
@@ -45,7 +46,7 @@ public class Main {
 
                 if(transactionDetails.length > 0) {
                     // Save transaction details by creating new accounts and transactions
-                    addTransaction(currentBank, transactionDetails);
+                    errorCount = addTransaction(currentBank, transactionDetails, errorCount);
                 }
             }
         } catch (Exception e) {
@@ -59,11 +60,11 @@ public class Main {
             }
         }
 
-        LOGGER.info("Transactions from " + fileName + " imported");
+        LOGGER.info("Transactions from " + fileName + " imported successfully. " + errorCount + " lines omitted due to incorrect formatting.");
         System.out.println("Transactions read");
     }
 
-    private static void addTransaction(Bank currentBank, String[] transactionDetails) {
+    private static int addTransaction(Bank currentBank, String[] transactionDetails, int invalidCount) {
         Account sender;
         Account receiver;
 
@@ -83,23 +84,27 @@ public class Main {
             receiver.earn(newTransaction);
 
         } catch (ParseException e) {
-            System.out.println("Unable to add transaction");
-            e.printStackTrace();
+            System.out.println("Unable to add transaction between " + transactionDetails[1] + " and " +
+                    transactionDetails[2] + " due to invalid value type: column 1 of the .csv file must contain valid dates");
             LOGGER.error("Unable to create transaction for details: " + Arrays.toString(transactionDetails));
+            invalidCount++;
+        } catch (NumberFormatException e) {
+            System.out.println("Unable to add transaction between " + transactionDetails[1] + " and " +
+                    transactionDetails[2] + " due to invalid value type: column 5 of the .csv file must contain decimal values");
+            invalidCount++;
         }
 
-        LOGGER.info("Transaction created and successfully added to Bank");
+        return invalidCount;
+
     }
 
     private static Account checkAccounts(Bank currentBank, String accountID) {
         if(!currentBank.accountExists(accountID)) {
-            LOGGER.info("Account does not yet exist. Creating...");
             Account newAcc = new Account(accountID);
             currentBank.addAccount(newAcc);
             LOGGER.info("Account created with accountID " + accountID);
             return newAcc;
         } else {
-            LOGGER.info("Account already exists for accountID " + accountID);
             return currentBank.getAccount(accountID);
         }
     }
@@ -124,12 +129,15 @@ public class Main {
                 LOGGER.info("User input matched with 'List All'");
                 supportBank.listAccountBalances();
             } else if(commandParts[0].equals("List") && commandParts.length == 2) {
+                LOGGER.info("User input matched with List [Account]. Attempting to find account...");
                 System.out.println(commandParts[1]);
                 try {
                     Account searched = supportBank.getAccount(commandParts[1]);
                     searched.getTransactions();
+                    LOGGER.info("Account found");
                 } catch (Exception e) {
                     System.out.println("Account not found");
+                    LOGGER.error("Account not found");
                 }
             }
 
