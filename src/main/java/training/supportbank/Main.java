@@ -1,7 +1,11 @@
 package training.supportbank;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -10,9 +14,11 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class Main {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static void main(String[] args) {
         final Bank supportBank = new Bank("SupportBank");
+        LOGGER.info("Bank created");
 
         System.out.println("Welcome to " + supportBank.getName());
 
@@ -43,9 +49,17 @@ public class Main {
                 }
             }
         } catch (Exception e) {
+            LOGGER.error("Failed with exception - unable to read transactions from " + fileName);
             e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                LOGGER.error("Unable to close reader for " + fileName);
+            }
         }
 
+        LOGGER.info("Transactions from " + fileName + " imported");
         System.out.println("Transactions read");
     }
 
@@ -71,15 +85,21 @@ public class Main {
         } catch (ParseException e) {
             System.out.println("Unable to add transaction");
             e.printStackTrace();
+            LOGGER.error("Unable to create transaction for details: " + Arrays.toString(transactionDetails));
         }
+
+        LOGGER.info("Transaction created and successfully added to Bank");
     }
 
     private static Account checkAccounts(Bank currentBank, String accountID) {
         if(!currentBank.accountExists(accountID)) {
+            LOGGER.info("Account does not yet exist. Creating...");
             Account newAcc = new Account(accountID);
             currentBank.addAccount(newAcc);
+            LOGGER.info("Account created with accountID " + accountID);
             return newAcc;
         } else {
+            LOGGER.info("Account already exists for accountID " + accountID);
             return currentBank.getAccount(accountID);
         }
     }
@@ -90,15 +110,18 @@ public class Main {
 
         System.out.println("Enter a command to search the bank records or 'quit' to exit");
         command = scanner.nextLine();
+        LOGGER.info("Line from terminal read in successfully. Line reads: " + command);
         String[] commandParts = command.split(" ", 2);
 
         while(!command.equals("quit")) {
 
             if(command.equals("help")) {
+                LOGGER.info("User input matched with 'help'");
                 System.out.println("Available commands:");
                 System.out.println("List All - this will output the names of every person, and the total amount they owe/are owed");
                 System.out.println("List [Account] - this will print a list of every transaction for the account with the name requested");
             } else if(command.equals("List All")) {
+                LOGGER.info("User input matched with 'List All'");
                 supportBank.listAccountBalances();
             } else if(commandParts[0].equals("List") && commandParts.length == 2) {
                 System.out.println(commandParts[1]);
