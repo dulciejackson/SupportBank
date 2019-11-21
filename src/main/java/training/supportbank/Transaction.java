@@ -1,19 +1,18 @@
 package training.supportbank;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
 public class Transaction {
-    private UUID id;
     private Date transactionDate;
-    private UUID tFrom;
-    private UUID tTo;
+    private String tFrom;
+    private String tTo;
     private String narrative;
     private BigDecimal amount;
 
-    public Transaction(Date tDate, UUID sender, UUID receiver, String reason, BigDecimal amount) {
-        this.id = UUID.randomUUID();
+    public Transaction(Date tDate, String sender, String receiver, String reason, BigDecimal amount) {
         this.transactionDate = tDate;
         this.tFrom = sender;
         this.tTo = receiver;
