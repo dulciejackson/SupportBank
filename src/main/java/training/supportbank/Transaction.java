@@ -19,4 +19,17 @@ public class Transaction {
         this.narrative = reason;
         this.amount = amount;
     }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "transactionDate=" + transactionDate +
+                ", narrative='" + narrative + '\'' +
+                ", amount=" + amount +
+                '}';
+    }
 }

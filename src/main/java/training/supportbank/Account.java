@@ -20,7 +20,25 @@ public class Account {
         return owner;
     }
 
-    public void addTransaction(Transaction newT) {
+    public void pay(Transaction newT) {
+        balance = balance.subtract(newT.getAmount());
         accountTransactions.add(newT);
+    }
+
+    public void earn(Transaction newT) {
+        balance = balance.add(newT.getAmount());
+        accountTransactions.add(newT);
+    }
+
+    public void getTransactions() {
+        accountTransactions.forEach(item -> System.out.println(item.toString()));
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "owner='" + owner + '\'' +
+                ", balance=" + balance +
+                '}';
     }
 }

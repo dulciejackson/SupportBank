@@ -28,4 +28,8 @@ public class Bank {
     public Account getAccount(String owner) {
         return accounts.get(owner);
     }
+
+    public void listAccountBalances() {
+        accounts.forEach((key, value) -> System.out.println(value.toString()));
+    }
 }
