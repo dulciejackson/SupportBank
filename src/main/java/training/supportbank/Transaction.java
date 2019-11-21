@@ -2,20 +2,21 @@ package training.supportbank;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.UUID;
 
 public class Transaction {
-    private Date transactionDate;
-    private String tFrom;
-    private String tTo;
+    private LocalDate date;
+    private String fromAccount;
+    private String toAccount;
     private String narrative;
     private BigDecimal amount;
 
-    public Transaction(Date tDate, String sender, String receiver, String reason, BigDecimal amount) {
-        this.transactionDate = tDate;
-        this.tFrom = sender;
-        this.tTo = receiver;
+    public Transaction(LocalDate tDate, String sender, String receiver, String reason, BigDecimal amount) {
+        this.date = tDate;
+        this.fromAccount = sender;
+        this.toAccount = receiver;
         this.narrative = reason;
         this.amount = amount;
     }
@@ -27,7 +28,7 @@ public class Transaction {
     @Override
     public String toString() {
         return "Transaction{" +
-                "transactionDate=" + transactionDate +
+                "transactionDate=" + date +
                 ", narrative='" + narrative + '\'' +
                 ", amount=" + amount +
                 '}';

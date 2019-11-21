@@ -1,5 +1,7 @@
 package training.supportbank;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonDeserializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,9 +11,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
+
+import com.google.gson.GsonBuilder;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
@@ -22,13 +28,13 @@ public class Main {
 
         System.out.println("Welcome to " + supportBank.getName());
 
-        readTransactions(supportBank, "Transactions2014.csv");
-        readTransactions(supportBank, "DodgyTransactions2015.csv");
+        readCSV(supportBank, "Transactions2014.csv");
+        readCSV(supportBank, "DodgyTransactions2015.csv");
 
         commandsFromUser(supportBank);
     }
 
-    private static void readTransactions(Bank currentBank, String fileName) {
+    private static void readCSV(Bank currentBank, String fileName) {
         final String COMMA_DELIMITER = ",";
         BufferedReader br = null;
         int errorCount = 0;
@@ -64,6 +70,13 @@ public class Main {
         System.out.println("Transactions read");
     }
 
+    private static void readJSON(Bank currentBank, String fileName) {
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (jsonElement, type, jsonDeserializationContext) ->
+                LocalDate.parse(jsonElement.getAsString()));
+        Gson gson = gsonBuilder.create();
+    }
+
     private static int addTransaction(Bank currentBank, String[] transactionDetails, int invalidCount) {
         Account sender;
         Account receiver;
@@ -73,7 +86,7 @@ public class Main {
 
         try {
             Transaction newTransaction;
-            Date tDate = new SimpleDateFormat("dd/MM/yyyy").parse(transactionDetails[0]);
+            LocalDate tDate = LocalDate.parse(transactionDetails[0]);
             String tFrom = transactionDetails[1];
             String tTo = transactionDetails[2];
             String reason = transactionDetails[3];
@@ -83,7 +96,7 @@ public class Main {
             sender.pay(newTransaction);
             receiver.earn(newTransaction);
 
-        } catch (ParseException e) {
+        } catch (DateTimeParseException e) {
             System.out.println("Unable to add transaction between " + transactionDetails[1] + " and " +
                     transactionDetails[2] + " due to invalid value type: column 1 of the .csv file must contain valid dates");
             LOGGER.error("Unable to create transaction for details: " + Arrays.toString(transactionDetails));
