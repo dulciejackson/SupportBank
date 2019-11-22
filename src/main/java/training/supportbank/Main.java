@@ -1,23 +1,24 @@
 package training.supportbank;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonDeserializer;
+import com.google.gson.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
-
-import com.google.gson.GsonBuilder;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
@@ -30,6 +31,8 @@ public class Main {
 
         readCSV(supportBank, "Transactions2014.csv");
         readCSV(supportBank, "DodgyTransactions2015.csv");
+
+        readJSON(supportBank, "Transactions2013.json");
 
         commandsFromUser(supportBank);
     }
@@ -61,7 +64,7 @@ public class Main {
         } finally {
             try {
                 br.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.error("Unable to close reader for " + fileName);
             }
         }
@@ -71,10 +74,33 @@ public class Main {
     }
 
     private static void readJSON(Bank currentBank, String fileName) {
+        System.out.println("Attempting to read transactions from JSON file...");
         GsonBuilder gsonBuilder = new GsonBuilder();
+        // sets up adapter to deal with non-primitive type LocalDate
         gsonBuilder.registerTypeAdapter(LocalDate.class, (JsonDeserializer<LocalDate>) (jsonElement, type, jsonDeserializationContext) ->
                 LocalDate.parse(jsonElement.getAsString()));
         Gson gson = gsonBuilder.create();
+
+        JsonParser parser = new JsonParser();
+        JsonArray a = new JsonArray();
+        try {
+            a = (JsonArray) parser.parse(new FileReader(fileName));
+
+            for(int i=0; i<a.size(); i++) {
+                JsonElement jsonObj = a.get(i);
+                Transaction fileT = gson.fromJson(jsonObj, Transaction.class);
+                Account sender = currentBank.getAccount(fileT.getFromAccount());
+                Account receiver = currentBank.getAccount(fileT.getToAccount());
+                sender.pay(fileT);
+                receiver.earn(fileT);
+            }
+
+            System.out.println("JSON file " + fileName + " read successfully.");
+
+        } catch (IOException e) {
+            LOGGER.error("JSON read error: Could not load file with name " + fileName);
+            e.printStackTrace();
+        }
     }
 
     private static int addTransaction(Bank currentBank, String[] transactionDetails, int invalidCount) {
@@ -86,7 +112,9 @@ public class Main {
 
         try {
             Transaction newTransaction;
-            LocalDate tDate = LocalDate.parse(transactionDetails[0]);
+
+            DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate tDate = LocalDate.parse(transactionDetails[0], format);
             String tFrom = transactionDetails[1];
             String tTo = transactionDetails[2];
             String reason = transactionDetails[3];
@@ -122,7 +150,7 @@ public class Main {
         }
     }
 
-    private static void commandsFromUser(Bank supportBank) {
+    private static void commandsFromUser(Bank supportBank) throws NullPointerException {
         Scanner scanner = new Scanner(System.in);
         String command = "";
 
@@ -152,6 +180,8 @@ public class Main {
                     System.out.println("Account not found");
                     LOGGER.error("Account not found");
                 }
+            } else if(command.matches("Import File (\\w)+.(csv|json|xml)")) {
+                final String fileExt = FilenameUtils
             }
 
             System.out.println();

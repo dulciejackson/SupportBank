@@ -32,4 +32,5 @@ public class Bank {
     public void listAccountBalances() {
         accounts.forEach((key, value) -> System.out.println(value.toString()));
     }
+
 }

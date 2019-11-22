@@ -25,6 +25,10 @@ public class Transaction {
         return amount;
     }
 
+    public String getFromAccount() { return fromAccount; }
+
+    public String getToAccount() { return toAccount; }
+
     @Override
     public String toString() {
         return "Transaction{" +
